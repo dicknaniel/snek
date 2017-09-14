@@ -69,6 +69,7 @@
     :sub
     :sum)
   (:import-from :common-lisp-user
+    :PII
     :with-gensyms))
 
 
@@ -86,18 +87,23 @@
     :in-box
     :in-circ
     :lget
-    :mixed
     :norm
+    :nrnd
+    :nrnd*
+    :nrndbtwn
     :on-circ
     :on-line
     :rnd
     :rnd*
     :rndbtwn
     :rndi
+    :nrndi
     :rndi*
+    :nrndi*
     :rndspace
     :rndspacei)
   (:import-from :common-lisp-user
+    :PII
     :with-gensyms))
 
 

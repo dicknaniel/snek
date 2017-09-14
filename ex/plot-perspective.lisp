@@ -20,13 +20,13 @@
                  (rnd:in-box 500 500 :xy (vec:vec -500d0 500d0))
                  (rnd:in-box 500 500 :xy (vec:vec 1500d0 500d0))
                  (rnd:in-box 500 500 :xy (vec:vec 500d0 1500d0)))))
-      (loop for x in (math:linspace left right rep) do
-        (loop for y in (math:linspace left right rep) do
+      (loop for x in (math:linspace rep left right) do
+        (loop for y in (math:linspace rep left right) do
           (let ((points (funcall ddd
                           (vec:vec x y) rad rad (half rad) (half rad))))
             (let ((top (subseq points 0 5))
                   (bottom (subseq points 5 10)))
-              (loop for s in (math:linspace 0.0 1.0 box-rep) do
+              (loop for s in (math:linspace box-rep 0.0 1.0) do
                 (plot:path plt
                    (loop for a in top
                      for b in bottom

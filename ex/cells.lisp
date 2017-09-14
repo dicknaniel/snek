@@ -11,7 +11,7 @@
     (mapcar
       (lambda (g) (let ((mid (rnd:in-circ (* 0.5d0 (- size 200)) :xy xy)))
                     (snek:add-path! snk
-                      (math:rep (p (math:linspace 0 1 n :end nil))
+                      (math:rep (p (math:linspace n 0 1 :end nil))
                         (math:on-circ p 20d0 :xy mid))
                       :g g
                       :closed t)))

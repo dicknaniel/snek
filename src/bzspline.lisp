@@ -117,11 +117,11 @@
 
 
 (defmacro rndpos (b n)
-  `(pos* ,b (rnd:rndspace 0.0d0 1.0d0 ,n)))
+  `(pos* ,b (rnd:rndspace ,n 0.0d0 1.0d0)))
 
 
 (defmacro rndpos* (b n)
-  `(pos* ,b (sort (rnd:rndspace 0.0d0 1.0d0 ,n) #'<)))
+  `(pos* ,b (sort (rnd:rndspace ,n 0.0d0 1.0d0) #'<)))
 
 
 (defun make (pts &key closed &aux (n (length pts)))

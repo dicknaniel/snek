@@ -34,20 +34,20 @@
         (plt (plot:make size)))
 
     (let ((stepper (make-stepper (box (vec:vec 500d0 499d0) (vec:vec 0d0 480d0)))))
-      (loop for s in (math:linspace 0.0 1.0 192) do
+      (loop for s in (math:linspace 192 0.0 1.0) do
         (plot:path plt (funcall stepper s))))
 
 
-    (loop for xs in (math:linspace 0.0 1.0 rep)
-          for x in (math:linspace left right rep) do
-      (loop for ys in (math:linspace 0.0 1.0 rep)
-            for y in (math:linspace left right rep) do
+    (loop for xs in (math:linspace rep 0.0 1.0)
+          for x in (math:linspace rep left right) do
+      (loop for ys in (math:linspace rep 0.0 1.0)
+            for y in (math:linspace rep left right) do
         (let ((stepper (make-stepper
                          (box (vec:vec x y)
                               (vec:scale
                                 (vec:cos-sin (+ (* pi 0.5) angle))
                                 rad)))))
-          (loop for s in (math:linspace 0.0 1.0 box-rep :end nil) do
+          (loop for s in (math:linspace box-rep 0.0 1.0 :end nil) do
             (plot:path plt (funcall stepper s))))
         (incf angle (rnd:rnd 0.01d0))))
 
