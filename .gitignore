@@ -6,4 +6,5 @@ x/res
 ex/res
 ex/*png
 x/*png
-*.2obj
+x-*/*png
+x-*/*2obj
