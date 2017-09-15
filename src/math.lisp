@@ -120,7 +120,7 @@
 
 
 (defun on-circ (p rad &key (xy (vec:zero)))
-  (declare (double-float p))
+  (declare (double-float p rad))
   (declare (vec:vec xy))
   (vec:add xy (vec:scale (vec:cos-sin (* p PII)) rad)))
 
@@ -139,7 +139,6 @@
 
 
 (defun polygon (n rad &key (xy (vec:zero)) (rot 0.0d0))
-  ;todo: this is incorrect?
   (declare (integer n))
   (declare (double-float rad rot))
   (declare (vec:vec xy))

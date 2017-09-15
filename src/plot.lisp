@@ -35,7 +35,7 @@
   (with-struct (plot- size verts coverage) plt
     (destructuring-bind (u v)
       line
-      (loop for xy in (math:nrep num (rnd:on-line u v)) do
+      (loop for xy in (rnd:non-line num u v) do
         (vec:inside* (size xy x y)
           (incf (aref coverage x y))
           (vector-push-extend xy verts))))))
@@ -105,7 +105,7 @@
     (destructuring-bind (u v)
       line
       (let ((offset (-get-offset u v s perp)))
-        (loop for xy in (math:nrep num (rnd:on-line u v)) do
+        (loop for xy in (rnd:non-line num u v) do
           (vec:inside (size xy x y)
             (incf (plot-discards plt)
                   (-stipple plt xy offset))))))))

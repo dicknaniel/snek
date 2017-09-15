@@ -24,8 +24,7 @@
                 (vec:add
                   (vec:mult v (vec:vec 2.0d0 char-height))
                   (vec:vec char-pos-x char-pos-y)))
-              (math:nrep (rnd:rndi* char-num)
-                (rnd:in-circ (rnd:rnd char-rad)))))))
+              (rnd:nin-circ (rnd:rndi* char-num) (rnd:rnd char-rad))))))
     snk))
 
 

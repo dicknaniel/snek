@@ -87,19 +87,23 @@
     :in-box
     :in-circ
     :lget
+    :nin-box
+    :nin-circ
+    :non-circ
+    :non-line
     :norm
     :nrnd
     :nrnd*
     :nrndbtwn
+    :nrndi
+    :nrndi*
     :on-circ
     :on-line
     :rnd
     :rnd*
     :rndbtwn
     :rndi
-    :nrndi
     :rndi*
-    :nrndi*
     :rndspace
     :rndspacei)
   (:import-from :common-lisp-user

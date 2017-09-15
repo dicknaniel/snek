@@ -122,6 +122,12 @@
   (-add-if (vec:scale (vec:cos-sin (random PII)) rad) xy))
 
 
+(defun non-circ (n rad &key xy)
+  (declare (integer n))
+  (declare (double-float rad))
+  (loop for i from 0 below n collect (on-circ rad :xy xy)))
+
+
 (defun in-circ (rad &key xy)
   (declare (double-float rad))
   (-add-if
@@ -134,16 +140,32 @@
     xy))
 
 
+(defun nin-circ (n rad &key xy)
+  (declare (integer n))
+  (declare (double-float rad))
+  (loop for i from 0 below n collect (in-circ rad :xy xy)))
+
+
 (defun in-box (sx sy &key xy)
-    (-add-if
-      (vec:vec (rnd* (math:dfloat sx))
-               (rnd* (math:dfloat sy)))
-      xy))
+  (declare (double-float sx sy))
+  (-add-if (vec:vec (rnd* sx) (rnd* sy)) xy))
+
+
+(defun nin-box (n sx sy &key xy)
+  (declare (integer n))
+  (declare (double-float sx sy))
+  (loop for i from 0 below n collect (in-box sx sy :xy xy)))
 
 
 (defun on-line (a b)
   (declare (vec:vec a b))
   (vec:add a (vec:scale (vec:sub b a) (random 1.0d0))))
+
+
+(defun non-line (n a b)
+  (declare (integer n))
+  (declare (vec:vec a b))
+  (loop for i from 0 below n collect (on-line a b)))
 
 
 ; WALKERS

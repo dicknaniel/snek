@@ -33,7 +33,7 @@ I have also written about things related to `snek` at
   - http://inconvergent.net/grains-of-sand/ (about "sandpainting", see `src/sandpaint.lisp`)
 
 Here is and example of manipulating a `snek` instance called `snk` using
-`alterations`. Alteration constructors are postfixed with ?.
+`alterations`. Alteration constructors are postfixed with `?`.
 
 ```lisp
 ; context start
@@ -41,7 +41,7 @@ Here is and example of manipulating a `snek` instance called `snk` using
   ; iterate vertices
   (snek:itr-verts (snk v)
     ; move alteration
-    (snek:move-vert? v (rnd:in-circ))
+    (snek:move-vert? v (rnd:in-circ 1d0))
     ; w will be an arbitrary
     ; vertex in snk
     (snek:with-rnd-vert (snk w)
