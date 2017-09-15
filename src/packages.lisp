@@ -161,7 +161,6 @@
     :pos
     :pos*
     :rndpos
-    :rndpos*
     :make
     :move)
   (:import-from :common-lisp-user

@@ -7,7 +7,9 @@
 
 
 (defun get-grp-as-bzspl (snk g)
-  (bzspl:make (snek:get-grp-verts snk :g g)))
+  (let ((pts (snek:get-grp-verts snk :g g)))
+    (if (> (length pts) 3)
+      (bzspl:make pts))))
 
 
 (defun edge-length (snk e)

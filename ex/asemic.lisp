@@ -62,7 +62,7 @@
               ;(snek:move-vert? v (funcall state-gen v 0.00009d0))
               (snek:move-vert? v (rnd:in-circ 0.4d0))))
           (sandpaint:pix sand
-            (bzspl:rndpos* (bzspl:make (snek:get-all-verts snk)) 2500)))))
+            (bzspl:rndpos (bzspl:make (snek:get-all-verts snk)) 2500)))))
 
     (sandpaint:save sand fn :gamma 1.5)))
 
