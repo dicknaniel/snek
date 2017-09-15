@@ -8,7 +8,9 @@ importantly it is a programming pattern for applying changes to the structure.
 It is specifically written to be useful for a broad range of ways in which I
 usually write generative algorithms for creating art.
 
-![head](img/img.png?raw=true "head")
+![head](img/lorem-ipsum.lisp.png?raw=true "ex")
+
+![head](img/cells.lisp.png?raw=true "ex")
 
 
 ## About the Name
@@ -79,7 +81,9 @@ file will be named `tmp.png`.
   - https://twitter.com/cronianrings
 
 
-![lines](img/ex-lines.png?raw=true "lines")
+![lines](img/lines.lisp.png?raw=true "ex")
+
+![lines](img/grid-bz-walk.lisp.png?raw=true "ex")
 
 
 ## Dependencies
