@@ -68,9 +68,6 @@ There are some examples included. All examples are in the `ex` folder.
 if you don't provide a result name as the first argument, then the resulting
 file will be named `tmp.png`.
 
-This includes a few samples of how to use the plotting functionality. This will
-export a simple vector file and an image to indicate the result.
-
 
 ## Usage
 
