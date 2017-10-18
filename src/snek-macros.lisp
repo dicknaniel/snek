@@ -7,39 +7,26 @@
   all alterations created in this context will be flattened
   and applied to snk at the end of the context.
   "
-  (with-gensyms (sname zw aname recursive-do-alts x)
-    `(let ((,sname ,snk)
-           (,zw ,zwidth))
-      (let ((,aname (snek-alt-names ,sname)))
-        (incf (snek-wc ,sname))
+  (with-gensyms (sname zw aname recursive-do-alts x y bdy)
+    `(let* ((,sname ,snk)
+            (,zw ,zwidth)
+            (,aname (snek-alt-names ,sname)))
 
-        (if ,zw
-          (setf (snek-zwidth ,sname) ,zw
-                (snek-zmap ,sname) (zmap:make (snek-verts ,sname)
-                                              (snek-num-verts ,sname)
-                                              (math:dfloat ,zw))))
+      (incf (snek-wc ,sname))
 
-        ; below code is akin to this, but it avoids the double-pass:
-        ; (defun do-alts (alts snk)
-        ;   (let ((alt-names (snek-alt-names snk)))
-        ;     (dolist (a alts)
-        ;       (funcall (gethash (type-of a) alt-names) snk a))))
+      (labels ((,recursive-do-alts (,x)
+                 (cond ((null ,x))
+                 ((atom ,x)
+                    (when (gethash (type-of ,x) ,aname)
+                      ; if atom is also alteration (else ignore):
+                      (funcall (gethash (type-of ,x) ,aname) ,sname ,x)))
+                 (t (,recursive-do-alts (car ,x))
+                    (,recursive-do-alts (cdr ,x))))))
 
-        ; (do-alts
-        ;   (remove-if-not
-        ;     (lambda (x) (gethash (type-of x) ,alt-names))
-        ;     (flatten (list ,@body)))
-        ;   ,sname)))))
-
-        (labels ((,recursive-do-alts (,x)
-                   (cond ((null ,x))
-                   ((atom ,x)
-                      (if (gethash (type-of ,x) ,aname)
-                        ; if atom is also alteration (else ignore):
-                        (funcall (gethash (type-of ,x) ,aname) ,sname ,x)))
-                   (t (,recursive-do-alts (car ,x))
-                      (,recursive-do-alts (cdr ,x))))))
-
+        (zmap:with* (,zw (snek-verts ,sname) (snek-num-verts ,sname)
+                        (lambda (,y) (setf (snek-zmap ,sname) ,y)))
+          ; this lets @body be executed in the context of zmap:with;
+          ; useful if we want to have a parallel context inside zmap.
           (,recursive-do-alts (list ,@body)))))))
 
 
@@ -50,7 +37,7 @@
               (,d (vec:len ,dx)))
          (declare (double-float ,d))
          (declare (vec:vec ,dx))
-         (if (> ,d 0.0d0)
+         (when (> ,d 0d0)
            (list ,@body))))))
 
 
@@ -65,9 +52,9 @@
       (let ((,grps (snek-grps ,sname)))
         (multiple-value-bind (,grp ,exists)
           (gethash ,gname ,grps)
-            (if (not ,exists)
+            (unless ,exists
               (error "attempted to access invalid group: ~a" ,gname))
-            ,@body)))))
+            (progn ,@body))))))
 
 
 (defmacro with-rnd-edge ((snk i &key g) &body body)
@@ -84,7 +71,7 @@
         (let* ((,edges (graph:get-edges ,grph))
                (,ln (length ,edges)))
           (declare (integer ,ln))
-          (if (> ,ln 0)
+          (when (> ,ln 0)
             (let ((,i (aref ,edges (random ,ln))))
               (declare (list ,i))
               (list ,@body))))))))
@@ -97,13 +84,13 @@
   "
   (with-gensyms (num)
     `(let ((,num (snek-num-verts ,snk)))
-       (if (> ,num 0)
+       (when (> ,num 0)
          (let ((,i (random ,num)))
            (declare (integer ,i))
            (list ,@body))))))
 
 
-(defmacro itr-verts ((snk i &key g) &body body)
+(defmacro itr-verts ((snk i &key g (collect t)) &body body)
   "
   iterates over all verts in grp g as i.
 
@@ -114,21 +101,22 @@
   (with-gensyms (grp sname)
     `(let ((,sname ,snk))
       (with-grp (,sname ,grp ,g)
-        (mapcar (lambda (,i) (declare (integer ,i)) ( list ,@body))
-                (graph:get-verts (grp-grph ,grp)))))))
+        (map ',(if collect 'list 'nil)
+          (lambda (,i) (declare (integer ,i)) (list ,@body))
+          (graph:get-verts (grp-grph ,grp)))))))
 
 
-(defmacro itr-all-verts ((snk i) &body body)
+(defmacro itr-all-verts ((snk i &key (collect t)) &body body)
   "
   iterates over all verts in snk as i.
   "
   (with-gensyms (sname)
     `(let ((,sname ,snk))
       (loop for ,i integer from 0 below (snek-num-verts ,sname)
-        collect (list ,@body)))))
+        ,(if collect 'collect 'do) (list ,@body)))))
 
 
-(defmacro itr-edges ((snk i &key g) &body body)
+(defmacro itr-edges ((snk i &key g (collect t)) &body body)
   "
   iterates over all edges in grp g as i.
 
@@ -137,13 +125,13 @@
   (with-gensyms (grp grph)
     `(with-grp (,snk ,grp ,g)
       (let ((,grph (grp-grph ,grp)))
-        (map 'list
+        (map ',(if collect 'list 'nil)
              (lambda (,i) (list ,@body))
              (graph:get-edges ,grph))))))
 
 
 ; TODO add flag to include nil grp
-(defmacro itr-grps ((snk g) &body body)
+(defmacro itr-grps ((snk g &key (collect t)) &body body)
   "
   iterates over all grps of snk as g.
   "
@@ -152,7 +140,7 @@
       (let ((,grps (snek-grps ,sname)))
         (loop for ,g being the hash-keys of ,grps
           if ,g ; ignores nil (main) grp
-          collect (list ,@body))))))
+          ,(if collect 'collect 'do) (list ,@body))))))
 
 
 (defmacro with-prob (p &body body)
@@ -161,6 +149,6 @@
   "
   (with-gensyms (pname)
     `(let ((,pname ,p))
-       (if (< (random 1.0) ,p)
+       (when (< (random 1d0) ,p)
          (list ,@body)))))
 

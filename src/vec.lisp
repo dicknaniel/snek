@@ -71,6 +71,11 @@
   (vec (vec-x v) (vec-y v)))
 
 
+(defun tolist (v)
+  (declare (vec v))
+  (list (vec-x v) (vec-y v)))
+
+
 (defun vec-coerce (x y)
   (vec (math:dfloat x) (math:dfloat y)))
 
@@ -107,11 +112,19 @@
 
 
 (defun arr-set (a i v)
-  (declare (vec:vec v))
+  (declare (vec v))
   (declare (integer i))
   (declare (type (array double-float) a))
   (setf (aref a i 0) (vec::vec-x v)
         (aref a i 1) (vec::vec-y v)))
+
+(defun angle (v)
+  (declare (vec v))
+  (with-xy ((norm v) x y)
+    (atan y x)))
+
+
+; MATHS
 
 
 (defun scale (a s)
@@ -134,6 +147,19 @@
       (- (vec-y a) (vec-y b))))
 
 
+(defun lsub (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (sub a b))
+          aa bb))
+
+
+(defun lsub* (aa b)
+  (declare (list aa))
+  (declare (vec b))
+  (mapcar (lambda (a) (sub a b))
+          aa))
+
+
 (defun isub (a b)
   (declare (vec a b))
   (vec (- (vec-x b) (vec-x a))
@@ -146,10 +172,36 @@
       (+ (vec-y a) (vec-y b))))
 
 
+(defun ladd (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (add a b))
+          aa bb))
+
+
+(defun ladd* (aa b)
+  (declare (list aa))
+  (declare (vec b))
+  (mapcar (lambda (a) (add a b))
+          aa))
+
+
 (defun mult (a b)
   (declare (vec a b))
   (vec (* (vec-x a) (vec-x b))
       (* (vec-y a) (vec-y b))))
+
+
+(defun lmult (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (mult a b))
+          aa bb))
+
+
+(defun lmult* (aa b)
+  (declare (list aa))
+  (declare (vec b))
+  (mapcar (lambda (a) (mult a b))
+          aa))
 
 
 (defun dot (a b)
@@ -164,6 +216,19 @@
       (/ (vec-y a) (vec-y b))))
 
 
+(defun ldiv (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (div a b))
+          aa bb))
+
+
+(defun ldiv* (aa b)
+  (declare (list aa))
+  (declare (vec b))
+  (mapcar (lambda (a) (div a b))
+          aa))
+
+
 (defun idiv (a b)
   (declare (vec a b))
   (vec (/ (vec-x b) (vec-x a))
@@ -172,8 +237,8 @@
 
 (defun len2 (a)
   (declare (vec a))
-  (+ (expt (vec-x a) 2.d0)
-     (expt (vec-y a) 2.d0)))
+  (+ (expt (vec-x a) 2d0)
+     (expt (vec-y a) 2d0)))
 
 (defun len (a)
   (declare (vec a))
@@ -182,7 +247,16 @@
 
 (defun mid (a b)
   (declare (vec a b))
-  (iscale (add a b) 2.0d0))
+  (iscale (add a b) 2d0))
+
+
+(defun lmid (aa)
+  (declare (list aa))
+  (let ((n 0))
+    (iscale
+      (reduce (lambda (a b) (incf n) (add a b))
+              aa)
+      (math:dfloat n))))
 
 
 (defun dst2 (a b)
@@ -195,13 +269,74 @@
   (len (sub a b)))
 
 
+(defun ldst (a b)
+  (declare (list a b))
+  (mapcar #'dst a b))
+
+
+(defun ldst* (aa b)
+  (declare (list aa))
+  (declare (vec b))
+  (loop for a in aa collect (dst a b)))
+
+
 (defun norm (a)
   (declare (vec a))
   (let ((l (len a)))
-    (if (> l 0.0d0) (iscale a l) a)))
+    (if (> l 0d0) (iscale a l) a)))
 
 
 (defun nsub (a b)
   (declare (vec a b))
   (norm (sub a b)))
+
+
+(defun sum (aa)
+  (declare (list aa))
+  (reduce (lambda (a b) (declare (vec a b)) (add a b))
+          aa))
+
+
+(defun rot (v a)
+  (declare (vec v))
+  (declare (double-float a))
+  (let ((cosa (cos a))
+        (sina (sin a)))
+    (with-xy (v x y)
+      (vec (- (* x cosa) (* y sina))
+           (+ (* x sina) (* y cosa))))))
+
+; TODO: cross
+
+
+; SHAPES
+
+
+(defun on-circ (p rad &key (xy (vec:zero)))
+  (declare (double-float p rad))
+  (declare (vec xy))
+  (vec:add xy (vec:scale (vec:cos-sin (* p PII)) rad)))
+
+
+(defun on-line (p a b)
+  (declare (double-float p))
+  (declare (vec a b))
+  (vec:add a (vec:scale (vec:sub b a) p)))
+
+
+(defun on-spiral (p rad &key (xy (vec:zero)) (rot 0d0))
+  (declare (double-float p rad rot))
+  (declare (vec xy))
+  (vec:add xy (vec:scale (vec:cos-sin (+ rot (* p PII)))
+                         (* p rad))))
+
+
+(defun polygon (n rad &key (xy (vec:zero)) (rot 0d0))
+  (declare (integer n))
+  (declare (double-float rad rot))
+  (declare (vec xy))
+  (loop for i from 0 below n collect (vec:add xy
+    (vec:scale
+      (vec:cos-sin (+ rot (* (/ i n) PII)))
+      rad))))
 

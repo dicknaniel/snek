@@ -5,15 +5,26 @@
 ; TYPES
 
 (defun int (x)
-  (the integer (coerce x 'integer)))
+  (the integer
+       (coerce x 'integer)))
 
 
 (defun int* (xx)
   (mapcar (lambda (x) (int x)) xx))
 
 
+(defun sfloat (x)
+  (the float
+       (coerce x 'float)))
+
+
+(defun sfloat* (xx)
+  (mapcar (lambda (x) (sfloat x)) xx))
+
+
 (defun dfloat (x)
-  (the double-float (coerce x 'double-float)))
+  (the double-float
+       (coerce x 'double-float)))
 
 
 (defun dfloat* (xx)
@@ -21,7 +32,6 @@
 
 
 ; RANGES
-; TODO: move?
 
 
 (defmacro rep ((i itt) &body body)
@@ -51,10 +61,23 @@
 
 
 (defun inc (x stp)
-  (mod (+ x stp) 1.0d0))
+  (mod (+ x stp) 1d0))
 
 
-(defun linspace (a b n &key (end t))
+(defmacro with-linspace ((n a b rn &key (end t)) &body body)
+  (with-gensyms (a* b* n* nn i ba)
+  `(let* ((,n* (int ,n))
+          (,nn (dfloat (if ,end (1- ,n*) ,n*)))
+          (,a* (dfloat ,a))
+          (,b* (dfloat ,b))
+          (,ba (- ,b* ,a*)))
+    (loop for ,i from 0 below ,n* do
+      (let ((,rn (dfloat (+ ,a* (* ,i (/ ,ba ,nn))))))
+        (progn ,@body))))))
+
+
+
+(defun linspace (n a b &key (end t))
   ; TODO
   ; (declare (double-float a b))
   ; (declare (integer n))
@@ -64,16 +87,6 @@
       (loop for i from 0 below n
         collect (dfloat (+ a (* i (/ (- b a) nn))))))
     (list (dfloat a))))
-
-
-(defun get-state-gen (get-state-fun)
-  (let ((state (make-hash-table :test #'equal)))
-    (lambda (i noise)
-      (multiple-value-bind (curr exists)
-        (gethash i state)
-        (if (not exists)
-          (setf (gethash i state) (setf curr (funcall get-state-fun))))
-        (funcall curr noise)))))
 
 
 ; LIST MATH
@@ -99,75 +112,31 @@
   (mapcar #'/ a b))
 
 
-(defun scale (a s)
-  (declare (list a))
-  (declare (double-float s))
-  (mapcar (lambda (i) (* i s)) a))
+(defun scale (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (* a b)) aa bb))
 
 
-(defun iscale (a s)
-  (declare (list a))
+(defun scale* (aa s)
+  (declare (list aa))
   (declare (double-float s))
-  (mapcar (lambda (i) (/ i s)) a))
+  (mapcar (lambda (a) (* a s)) aa))
+
+
+(defun iscale (aa bb)
+  (declare (list aa bb))
+  (mapcar (lambda (a b) (/ a b)) aa bb))
+
+
+(defun iscale* (aa s)
+  (declare (list aa))
+  (declare (double-float s))
+  (mapcar (lambda (a) (/ a s)) aa))
 
 
 (defun sum (a)
   (declare (list a))
   (reduce #'+ a))
 
-
-; SHAPES
-
-
-(defun on-circ (p rad &key (xy (vec:zero)))
-  (declare (double-float p))
-  (declare (vec:vec xy))
-  (vec:add xy (vec:scale (vec:cos-sin (* p PI 2.0d0)) rad)))
-
-
-(defun on-line (p a b)
-  (declare (double-float p))
-  (declare (vec:vec a b))
-  (vec:add a (vec:scale (vec:sub b a) p)))
-
-
-(defun on-spiral (p rad &key (xy (vec:zero)) (rot 0.0d0))
-  (declare (double-float p rad rot))
-  (declare (vec:vec xy))
-  (vec:add xy (vec:scale (vec:cos-sin (+ rot (* p 2d0 PI)))
-                         (* p rad))))
-
-
-(defun polygon (i n rad &key (xy (vec:zero)) (rot 0.0d0))
-  ;todo: this is incorrect?
-  (declare (integer i n))
-  (declare (double-float rad rot))
-  (declare (vec:vec xy))
-  (loop for i from 0 below n collect (vec:add xy
-    (vec:scale
-      (vec:cos-sin (+ rot (* (/ i n) 2.0d0 PI)))
-      rad))))
-
-
-; THREE POINT
-; todo: move
-
-(defun -make-front-path (aa bb cc as bs)
-  (let ((p1 (vec:add cc (vec:scale (vec:sub aa cc) as)))
-        (p2 (vec:add cc (vec:scale (vec:sub bb cc) bs))))
-    (list p1 cc p2)))
-
-
-(defun -make-full-path (aa bb cc as bs)
-  (let ((p1 (vec:add cc (vec:scale (vec:sub aa cc) as)))
-        (p2 (vec:add cc (vec:scale (vec:sub bb cc) bs))))
-    (list p1 cc p2 (vec:add p2 (vec:scale (vec:sub aa p2) as)) p1)))
-
-
-(defun make-perspective-transform (a b c)
-  (lambda (p a* b* u* d*)
-    (let ((pc (vec:sub c p)))
-      (let ((u (vec:sub p (vec:scale pc u*)))
-            (d (vec:add p (vec:scale pc d*))))
-        (append (-make-full-path a b u a* b*) (-make-full-path a b d a* b*))))))
+; TODO: expt, sqrt, ...
 

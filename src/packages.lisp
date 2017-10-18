@@ -5,6 +5,7 @@
     :add
     :arr-get
     :arr-set
+    :angle
     :copy
     :cos-sin
     :div
@@ -17,21 +18,38 @@
     :inside*
     :iscale
     :isub
+    :ladd
+    :ladd*
+    :ldiv
+    :ldiv*
+    :ldst
+    :ldst*
     :len
     :len2
     :lmid
+    :lmid
+    :lmult
+    :lmult*
     :lround
+    :lsub
+    :lsub*
     :mid
     :mult
     :norm
     :nsub
+    :on-circ
+    :on-line
+    :on-spiral
     :one
     :perp
+    :polygon
     :rep
+    :rot
     :scale
     :sin-cos
     :sub
     :sum
+    :tolist
     :v
     :vec
     :vec*
@@ -39,6 +57,7 @@
     :zero
     :with-xy)
   (:import-from :common-lisp-user
+    :PII
     :with-gensyms))
 
 (defpackage :math
@@ -49,25 +68,25 @@
     :dfloat
     :dfloat*
     :div
-    :get-state-gen
+    :dst
     :inc
     :int
     :int*
     :iscale
+    :iscale*
     :lget
     :linspace
-    :make-perspective-transform
     :mult
     :nrep
-    :on-circ
-    :on-line
-    :on-spiral
-    :polygon
     :range
     :rep
     :scale
+    :scale*
+    :sfloat
+    :sfloat*
     :sub
-    :sum)
+    :sum
+    :with-linspace)
   (:import-from :common-lisp-user
     :with-gensyms))
 
@@ -86,8 +105,15 @@
     :in-box
     :in-circ
     :lget
-    :mixed
+    :nin-box
+    :nin-circ
+    :non-circ
+    :non-line
     :norm
+    :nrnd
+    :nrnd*
+    :nrndi
+    :nrndi*
     :on-circ
     :on-line
     :rnd
@@ -96,8 +122,12 @@
     :rndi
     :rndi*
     :rndspace
-    :rndspacei)
+    :rndspacei
+    :with-in-circ
+    :with-on-line
+    :with-rndspace)
   (:import-from :common-lisp-user
+    :PII
     :with-gensyms))
 
 
@@ -105,6 +135,7 @@
   (:use :common-lisp)
   (:export
     :black
+    :cmyk
     :dark
     :gray
     :hsv
@@ -136,6 +167,7 @@
     :add
     :del
     :get-edges
+    :get-incident-edges
     :get-num-edges
     :get-num-verts
     :get-verts
@@ -146,19 +178,21 @@
   (:import-from :common-lisp-user
     :flatten
     :make-vec
-    :with-struct))
+    :with-struct
+    :with-gensyms))
 
 
 (defpackage :bzspl
   (:use :common-lisp)
   (:export
+    :adaptive-pos
     :pos
     :pos*
     :rndpos
-    :rndpos*
     :make
-    :move)
+    :with-rndpos)
   (:import-from :common-lisp-user
+    :with-gensyms
     :make-dfloat-array
     :with-struct))
 
@@ -180,11 +214,14 @@
   (:use :common-lisp)
   (:export
     :make
-    :verts-in-rad)
+    :with*
+    :verts-in-rad
+    :with-verts-in-rad)
   (:import-from :common-lisp-user
     :get-dfloat-tup
     :make-int-vec
-    :with-struct))
+    :with-struct
+    :with-gensyms))
 
 (defpackage :sandpaint
   (:use :common-lisp)
@@ -196,6 +233,7 @@
     :dens-stroke
     :lin-path
     :make
+    :bzspl-stroke
     :pix
     :pix*
     :pixel-hack
@@ -252,6 +290,7 @@
     :get-edges
     :get-grp-as-bzspl
     :get-grp-verts
+    :get-incident-edges
     :get-num-edges
     :get-num-verts
     :get-vert
@@ -273,7 +312,8 @@
     :with-grp
     :with-prob
     :with-rnd-edge
-    :with-rnd-vert)
+    :with-rnd-vert
+    :with-verts-in-rad)
   (:import-from :common-lisp-user
     :append-postfix
     :flatten

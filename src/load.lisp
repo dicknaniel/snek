@@ -12,14 +12,13 @@
 
 (asdf:defsystem "snek"
   :description "SNEK - A Generative System for Writing Generative Systems"
-  :version "2.2.2"
+  :version "2.5.2"
   :author "inconvergent"
   :licence "MIT"
   :serial t
   :depends-on ("zpng")
   :components ((:file "pg-utils")
-               (:file "utils")
-               (:file "utils-time")
+               (:file "various")
                (:file "packages")
                (:file "vec")
                (:file "math")
@@ -37,7 +36,7 @@
                (:file "snek-utils")
                (:file "snek-alterations")
                (:file "snek-alterations-mutate")
-               (:file "snek-misc")))
+               (:file "snek-extra")))
 
 (asdf:load-system "snek")
 

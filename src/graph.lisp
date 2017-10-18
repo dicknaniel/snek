@@ -38,6 +38,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 
 (defun add (grph a b)
+  (declare (graph grph))
   (declare (integer a b))
   (with-struct (graph- adj make-hset verts) grph
     (if
@@ -73,6 +74,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 
 (defun del (grph a b)
+  (declare (graph grph))
   (declare (integer a b))
   (with-struct (graph- adj verts) grph
     (if
@@ -88,14 +90,17 @@ a simple (undirected) graph structure based on adjacency lists.
 
 
 (defun get-num-edges (grph)
+  (declare (graph grph))
   (graph-num-edges grph))
 
 
 (defun get-num-verts (grph)
+  (declare (graph grph))
   (hset:num (graph-verts grph)))
 
 
 (defun mem (grph a b)
+  (declare (graph grph))
   (declare (integer a b))
   (with-struct (graph- adj) grph
     (multiple-value-bind (val exists)
@@ -105,6 +110,7 @@ a simple (undirected) graph structure based on adjacency lists.
 
 
 (defun get-edges (grph)
+  (declare (graph grph))
   (let ((res (make-vec (graph-size grph)))
         (adj (graph-adj grph)))
     (declare (type (array list) res))
@@ -116,14 +122,24 @@ a simple (undirected) graph structure based on adjacency lists.
     res))
 
 
+(defun get-incident-edges (grph v)
+  (declare (graph grph))
+  (declare (integer v))
+  (with-struct (graph- adj) grph
+    (let ((a (gethash v adj)))
+      (if a
+        (loop for w integer being the hash-keys of a collect
+              (sort (list v w) #'<))
+        nil))))
+
+
 (defun get-verts (grph)
+  (declare (graph grph))
   (hset:to-list (graph-verts grph)))
 
 
 (defmacro with-graph-edges ((grph e) &body body)
-  (let ((adj (gensym))
-        (a (gensym))
-        (b (gensym)))
+  (with-gensyms (adj a b)
     `(let ((,adj (graph-adj ,grph)))
       (loop for ,a integer being the hash-keys of ,adj collect
         (loop for ,b integer in (hset:to-list (gethash ,a ,adj))

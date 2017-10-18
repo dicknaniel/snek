@@ -1,6 +1,8 @@
 
 (in-package :bzspl)
 
+;useful info: http://graphics.cs.ucdavis.edu/~joy/ecs178/Unit-7-Notes/MatrixBSpline.pdf
+
 ;M = 1/6
 ;((1 4 1 0)
 ;(-3 0 3 0)
@@ -9,155 +11,196 @@
 
 
 (defvar *m*)
-;(setf *m* '((1.0d0 4.0d0 1.0d0 0.0d0)
-;            (-3.0d0 0.0d0 3.0d0 0.0d0)
-;            (3.0d0 -6.0d0 3.0d0 0.0d0)
-;            (-1.0d0 3.0d0 -3.0d0 1.0d0)))
+;(setf *m* '((1d0 4d0 1d0 0d0)
+;            (-3d0 0d0 3d0 0d0)
+;            (3d0 -6d0 3d0 0d0)
+;            (-1d0 3d0 -3d0 1d0)))
 
-;(setf *m* '((1.0d0 0.0d0 0.0d0 0.0d0)
-;            (-3.0d0 3.0d0 0.0d0 0.0d0)
-;            (3.0d0 -6.0d0 3.0d0 0.0d0)
-;            (-1.0d0 3.0d0 -3.0d0 1.0d0)))
+;(setf *m* '((1d0 0d0 0d0 0d0)
+;            (-3d0 3d0 0d0 0d0)
+;            (3d0 -6d0 3d0 0d0)
+;            (-1d0 3d0 -3d0 1d0)))
 
-(setf *m* '((1.0d0 0.0d0 0.0d0 )
-            (-2.0d0 2.0d0 0.0d0)
-            (1.0d0 -2.0d0 1.0d0)))
+(setf *m* '((1d0 0d0 0d0 )
+            (-2d0 2d0 0d0)
+            (1d0 -2d0 1d0)))
 
-;(setf *m* '((1.0d0 1.0d0 0.0d0 )
-;            (-2.0d0 2.0d0 0.0d0)
-;            (1.0d0 -2.0d0 1.0d0)))
+;(setf *m* '((1d0 1d0 0d0 )
+;            (-2d0 2d0 0d0)
+;            (1d0 -2d0 1d0)))
 
 
 (defstruct bzspl
   (n nil :type integer :read-only t)
+  (ns nil :type integer :read-only t)
   (closed nil :type boolean)
-  (select-pts nil :type function)
-  (get-seg nil :type function)
-  (pts nil))
+  (vpts nil))
 
 
 (defun do-m (pts)
-  (loop for mrow in *m* collect
-    (let ((s (vec:Vec 0.0d0 0.0d0)))
-      (loop for p in pts and mr in mrow do
+  (declare (list pts))
+  (loop for mrow list in *m* collect
+    (let ((s (vec:vec 0d0 0d0)))
+      (loop for p of-type vec:vec in pts
+            and mr double-float in mrow do
         (setf s (vec:add s (vec:scale p mr))))
       s)))
 
 
 (defun do-t (x pk)
-  (let ((s (vec:vec 0.0d0 0.0d0)))
-    (loop for p in pk and xi in (list 1.0d0 x (* x x)) do
+  (declare (double-float x))
+  (declare (list pk))
+  (let ((s (vec:vec 0d0 0d0)))
+    (loop for p of-type vec:vec in pk
+          and xi double-float in (list 1d0 x (* x x)) do
       (setf s (vec:add s (vec:scale p xi))))
     s))
 
 
-(defun -get-seg-open (n x)
-  (let ((s (/ 1.0d0 (math:dfloat (- n 2)))))
-    (if (>= x 1.0d0)
-      (list
-        1.0d0
+(defun -get-seg (ns x)
+  (declare (integer ns))
+  (declare (double-float x))
+  (let ((s (/ 1d0 (math:dfloat ns))))
+    (if (>= x 1d0)
+      (values
+        1d0
         (- (floor (/ x s)) 1))
-      (list
+      (values
         (/ (mod x s) s)
         (floor (/ x s))))))
 
 
-(defun -get-seg-closed (n x)
-  (let ((s (/ 1.0d0 (math:dfloat n))))
-    (list
-      (/ (mod x s) s)
-      (floor (/ x s)))))
+(defun -select-pts (n vpts seg)
+  (declare (integer n seg))
+  (let ((i (* 2 seg)))
+    (list (aref vpts i)
+          (aref vpts (+ i 1))
+          (aref vpts (+ i 2)))))
 
 
-(defun -mean (pts a b)
-  (vec:scale
-    (vec:add (vec:arr-get pts a)
-             (vec:arr-get pts b))
-    0.5d0))
-
-
-(defun -select-pts-open (n pts seg)
-  (cond ((< seg 1)
-          (list
-            (vec:arr-get pts 0)
-            (vec:arr-get pts 1)
-            (-mean pts 1 2)))
-        ((< seg (- n 3))
-          (list
-            (-mean pts seg (+ seg 1))
-            (vec:arr-get pts (+ seg 1))
-            (-mean pts (+ seg 1) (+ seg 2))))
-        (t
-          (list
-            (-mean pts (- n 3) (- n 2))
-            (vec:arr-get pts (- n 2))
-            (vec:arr-get pts (- n 1))))))
-
-
-(defun -select-pts-closed (n pts seg)
-  (list
-    (-mean pts (mod seg n) (mod (+ seg 1) n))
-    (vec:arr-get pts (mod (+ seg 1) n))
-    (-mean pts (mod (+ seg 1) n) (mod (+ seg 2) n))))
+(defmacro -x-to-pt (vpts n ns x)
+  `(multiple-value-bind (x-loc seg)
+    (-get-seg ,ns ,x)
+    (do-t x-loc (do-m (-select-pts ,n ,vpts seg)))))
 
 
 (defun pos (b x)
-  (with-struct (bzspl- n pts get-seg select-pts) b
-    (destructuring-bind (x-loc seg)
-      (funcall get-seg n (math:dfloat x))
-      (do-t x-loc (do-m (funcall select-pts n pts seg))))))
+  (declare (bzspl b))
+  (declare (double-float x))
+  (with-struct (bzspl- n ns vpts) b
+    (-x-to-pt vpts n ns x)))
 
 
 (defun pos* (b xx)
-  (with-struct (bzspl- n pts get-seg select-pts) b
-    (loop for x in (math:dfloat* xx) collect
-      (destructuring-bind (x-loc seg)
-        (funcall get-seg n x)
-        (do-t x-loc (do-m (funcall select-pts n pts seg)))))))
+  (declare (bzspl b))
+  (declare (list xx))
+  (with-struct (bzspl- n ns vpts) b
+    (loop for x double-float in xx collect
+      (-x-to-pt vpts n ns x))))
 
 
-(defmacro rndpos (b n)
-  `(pos* ,b (rnd:rndspace 0.0d0 1.0d0 ,n)))
+(defun adaptive-pos (b &key (dens 1d0) (end t))
+  (let ((res (make-array 10 :fill-pointer 0 :element-type 'vec:vec)))
+    (with-struct (bzspl- n ns vpts) b
+      (loop for s from 0 below ns collect
+        (loop for x-loc in (math:linspace
+                             (ceiling (* (-get-segment-length vpts n s) dens))
+                             0d0 1d0 :end (and end (>= s (1- ns)))) do
+          (vector-push-extend  (do-t x-loc (do-m (-select-pts n vpts s))) res))))
+       (coerce res 'list)))
 
 
-(defmacro rndpos* (b n)
-  `(pos* ,b (sort (rnd:rndspace 0.0d0 1.0d0 ,n) #'<)))
+(defmacro with-rndpos ((b n rn) &body body)
+  (with-gensyms (x-loc seg b* bn bns vpts)
+    `(let* ((,b* ,b)
+            (,bns (bzspl-ns ,b*))
+            (,bn (bzspl-n ,b*))
+            (,vpts (bzspl-vpts ,b*)))
+      (loop repeat ,n do
+        (multiple-value-bind (,x-loc ,seg)
+          (-get-seg ,bns (rnd:rnd))
+          (let ((,rn (do-t ,x-loc (do-m (-select-pts ,bn ,vpts ,seg)))))
+            (progn ,@body)))))))
+
+
+(defun rndpos (b n &key order)
+  (declare (integer n))
+  (pos* b (if order
+            (sort (rnd:rndspace n 0d0 1d0) #'<)
+            (rnd:rndspace n 0d0 1d0))))
+
+
+(defun -set-v (vpts opts a b)
+  (setf (aref vpts b)
+        (aref opts a)))
+
+
+(defun -set-v-mean (vpts opts a b c)
+  (setf (aref vpts c)
+        (vec:scale (vec:add (aref opts a) (aref opts b)) 0.5d0)))
+
+
+(defun -set-vpts-open (vpts pts n)
+  (let ((opts (make-array n :element-type 'list :initial-contents pts))
+        (n* (- (* 2 n) 3)))
+    (loop for i integer from 0 below 2
+          and k integer from (- n* 2)
+          and j integer from (- n 2) do
+      (-set-v vpts opts i i)
+      (-set-v vpts opts j k))
+
+    (loop for i integer from 1 below (- n 2) do
+      (let ((j (- (* 2 i) 1)))
+        (-set-v vpts opts i j)
+        (-set-v-mean vpts opts i (+ i 1) (+ j 1))))))
+
+
+(defun -set-vpts-closed (vpts pts n)
+  (let ((opts (make-array n :element-type 'list :initial-contents pts))
+        (n* (+ (* 2 n) 1)))
+    (loop for i integer from 0 below n do
+      (let ((j (* 2 i)))
+        (-set-v-mean vpts opts i (mod (+ i 1) n) j)
+        (-set-v vpts opts (mod (+ i 1) n) (+ j 1))))
+    (-set-v-mean vpts opts 0 1 (- n* 1))))
+
+
+(defun -get-segment-length (vpts n seg)
+
+  (let ((curr nil)
+        (prev 0d0)
+        (err 10d0))
+
+    (block iterations
+      (loop for c from 3 do
+        (setf curr
+              (let ((samples (loop for xi in (math:linspace (expt 2 c) 0d0 1d0) collect
+                                (do-t xi (do-m (-select-pts n vpts seg))))))
+                (loop for sa in samples and sb in (cdr samples)
+                      summing (vec:dst sa sb) into l
+                      finally (return l))))
+        (setf err (abs (- prev curr)))
+        (setf prev curr)
+        (when (< err 1d-7)
+          (return-from iterations))))
+    curr))
+
 
 
 (defun make (pts &key closed &aux (n (length pts)))
-  (assert (>= n 4) (n) "must have at least 4 pts. has ~a." n)
-  (let ((apts (make-dfloat-array n)))
-    (loop for xy in pts and i from 0 do
-      (setf (aref apts i 0) (math:dfloat (vec::vec-x xy))
-            (aref apts i 1) (math:dfloat (vec::vec-y xy))))
-    (make-bzspl :n n
-                :pts apts
-                :select-pts (if closed
-                                #'-select-pts-closed
-                                #'-select-pts-open)
-                :get-seg (if closed
-                             #'-get-seg-closed
-                             #'-get-seg-open)
-                :closed closed)))
+  (declare (list pts))
+  (declare (boolean closed))
+  (declare (integer n))
+  (assert (>= n 3) (n) "must have at least 3 pts. has ~a." n)
+  (let ((vpts (make-array (if closed (+ (* 2 n) 1) (- (* 2 n) 3))
+                          :element-type 'vec:vec))
+        (ns (if closed n (- n 2))))
 
+    (if closed
+      (-set-vpts-closed vpts pts n)
+      (-set-vpts-open vpts pts n))
 
-(defun -move-rel (pts i xy)
-  (destructuring-bind (x y)
-    xy
-    (incf (aref pts i 0) x)
-    (incf (aref pts i 1) y)))
+    (make-bzspl :n n :ns ns :vpts vpts :closed closed)))
 
-
-(defun -move (pts i xy)
-  (destructuring-bind (x y)
-    xy
-    (setf (aref pts i 0) x
-          (aref pts i 1) y)))
-
-
-(defun move (b pos &key rel)
-  (let ((do-move (if rel #'-move-rel #'-move)))
-    (with-struct (bzspl- pts) b
-      (loop for xy in pos and i from 0 do
-        (funcall do-move pts i xy)))))
+; TODO: implement move?
 
